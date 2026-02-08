@@ -1,154 +1,236 @@
-# Pixodex – AI Public Transport Crowd Prediction System
-## Requirements Document
+# Requirements Document: Urban Transport Intelligence
 
----
+## Introduction
 
-## 1. Project Overview
+The Urban Transport Intelligence system is a multi-modal, reactive AI agent that predicts crowding, delays, traffic congestion, and route disruptions in urban public transport networks. The system uses behavior-based signals (GPS, headway, time, weather) to provide early warnings and predictive insights without relying on cameras or satellite imagery. This enables transport authorities to make data-backed decisions and helps commuters plan their journeys more effectively.
 
-Pixodex is an AI-powered crowd prediction system designed to forecast bus occupancy levels in Indian metropolitan cities. The system leverages machine learning algorithms to analyze historical ridership patterns, real-time data feeds, and contextual factors to provide accurate crowd density predictions for public transport users and transit authorities.
+The system integrates with existing GPS, AVL, and transportation telemetry systems deployed across various regions. Data availability may vary by location, and the system is designed to adapt accordingly.
 
-## 2. Problem Statement
+## Assumptions and Constraints
 
-Public transport users in Indian cities face significant challenges with overcrowded buses, leading to:
-- Uncomfortable and unsafe travel experiences
-- Unpredictable commute times and missed connections
-- Inefficient resource allocation by transport authorities
-- Lack of real-time information for informed travel decisions
+- **Vehicle arrival and departure detection**: Vehicle arrival and departure at stops are inferred using GPS proximity and speed thresholds, without requiring dedicated stop sensors.
+- **Periodic updates**: Throughout this document, "periodically" refers to configurable intervals based on operational requirements and data availability. Specific intervals will be determined during design and implementation.
+- **Multi-modal capabilities**: Different transport modes support different capabilities. Crowding prediction applies primarily to buses and metros. Delay prediction applies to all modes. Route disruption detection applies where applicable to the mode's operational characteristics.
 
-Current solutions provide limited or no crowd prediction capabilities, forcing commuters to rely on guesswork when planning their journeys.
+## Glossary
 
-## 3. Goals and Objectives
+- **System**: The Urban Transport Intelligence platform
+- **Vehicle**: Any public transport unit (bus, tram, train, metro)
+- **Headway**: Time interval between consecutive vehicles on the same route
+- **Dwell_Time**: Duration a vehicle remains stopped at a station or stop
+- **Route**: A defined path with scheduled stops for public transport
+- **Crowding_Level**: Measure of passenger density (low, medium, high, critical)
+- **Delay_Prediction**: Forecasted deviation from scheduled arrival time
+- **Disruption**: Unplanned event affecting normal service operation
+- **Transport_Authority**: Organization managing public transport operations
+- **Commuter**: Person using public transport services
+- **Historical_Pattern**: Past behavior data used for prediction modeling
+- **Weather_Event**: Environmental condition affecting transport (rain, snow, extreme heat)
+- **Alert**: Notification sent to authorities or commuters about predicted issues
+- **Multi_Modal**: Involving multiple types of transport (bus, train, tram, metro)
 
-### Primary Goals
-- Predict bus crowd density with 80%+ accuracy for 1-4 hour forecasts
-- Reduce average passenger wait times by 15-20%
-- Improve overall passenger satisfaction and safety
+## Requirements
 
-### Secondary Goals
-- Enable data-driven bus fleet optimization for transport authorities
-- Provide alternative route suggestions during peak congestion
-- Create a scalable foundation for expansion to other transport modes
+### Requirement 1: Real-Time Vehicle Tracking
 
-## 4. Target Users
+**User Story:** As a transport authority, I want my vehicles to be tracked in real-time using their GPS position, so that I can monitor the current status of my vehicles.
 
-### Primary Users
-- **Daily Commuters**: Office workers, students, and regular public transport users
-- **Occasional Travelers**: Tourists, visitors, and infrequent bus users
+#### Acceptance Criteria
 
-### Secondary Users
-- **Transport Authorities**: City bus operators and fleet managers
-- **Urban Planners**: Government officials responsible for transport infrastructure
+1. WHEN GPS data is received from a vehicle, THE System SHALL parse the location, speed, and timestamp
+2. WHEN invalid or corrupted GPS data is received, THE System SHALL log the error and continue processing other data
+3. THE System SHALL process vehicle position updates whenever GPS data is received, with an expected update interval of up to 30 seconds
+4. WHEN a vehicle fails to send GPS data for longer than 5 minutes, THE System SHALL indicate that the vehicle may be offline
+5. THE System SHALL store GPS data with sufficient precision for route and congestion analysis
 
-## 5. Functional Requirements
+### Requirement 2: Headway Calculation and Monitoring
 
-### 5.1 Core Prediction Features
-- **FR-001**: System shall predict crowd density levels (Low/Medium/High) for specific bus routes
-- **FR-002**: System shall provide predictions for 1, 2, and 4-hour time horizons
-- **FR-003**: System shall update predictions every 15 minutes during operational hours
-- **FR-004**: System shall cover major bus routes in at least 2 Indian metropolitan cities
+**User Story:** As a transport authority, I want to calculate headway between consecutive vehicles on the same route, so that I can detect service bunching or gaps.
 
-### 5.2 User Interface
-- **FR-005**: Mobile-responsive web application for crowd predictions
-- **FR-006**: Route search functionality with crowd level indicators
-- **FR-007**: Alternative route suggestions when high crowd levels predicted
-- **FR-008**: Historical crowd pattern visualization for popular routes
+#### Acceptance Criteria
 
-### 5.3 Data Integration
-- **FR-009**: Integration with public transport schedule APIs
-- **FR-010**: Weather data integration for improved prediction accuracy
-- **FR-011**: Holiday and event calendar integration
-- **FR-012**: Real-time traffic data incorporation
+1. WHEN two consecutive vehicles on the same route are tracked, THE System SHALL calculate the time interval between them
+2. WHEN calculated headway exceeds the scheduled interval by a significant margin, THE System SHALL indicate a service gap
+3. WHEN calculated headway is significantly less than the scheduled interval, THE System SHALL indicate service bunching
+4. THE System SHALL recalculate headway for all active routes periodically
+5. WHEN headway data cannot be calculated from GPS, THE System SHALL use schedule data as fallback
 
-### 5.4 Administrative Features
-- **FR-013**: Dashboard for transport authorities showing fleet utilization
-- **FR-014**: Prediction accuracy monitoring and reporting
-- **FR-015**: Route performance analytics and recommendations
+### Requirement 3: Dwell Time Analysis
 
-## 6. Non-Functional Requirements
+**User Story:** As a data analyst, I want to measure how long vehicles remain at stops, so that I can identify bottlenecks and crowding patterns.
 
-### 6.1 Performance
-- **NFR-001**: System response time < 3 seconds for prediction queries
-- **NFR-002**: Support for 10,000+ concurrent users during peak hours
-- **NFR-003**: 99.5% system uptime during operational hours (6 AM - 11 PM)
+#### Acceptance Criteria
 
-### 6.2 Scalability
-- **NFR-004**: Architecture shall support addition of new cities without system redesign
-- **NFR-005**: Database shall handle 1M+ prediction requests per day
+1. WHEN a vehicle arrives at a designated stop, THE System SHALL begin measuring dwell time
+2. WHEN a vehicle departs from a stop, THE System SHALL record the total dwell time
+3. WHEN dwell time significantly exceeds the historical average for that stop, THE System SHALL indicate abnormal dwell behavior
+4. THE System SHALL associate dwell time measurements with specific stops and time periods
+5. THE System SHALL maintain historical averages of dwell time for comparison purposes
 
-### 6.3 Accuracy
-- **NFR-006**: Prediction accuracy ≥ 80% for 1-hour forecasts
-- **NFR-007**: Prediction accuracy ≥ 70% for 4-hour forecasts
+### Requirement 4: Crowding Prediction
 
-### 6.4 Security & Privacy
-- **NFR-008**: User location data shall be anonymized and aggregated
-- **NFR-009**: HTTPS encryption for all data transmission
-- **NFR-010**: Compliance with Indian data protection regulations
+**User Story:** As a commuter, I want to know predicted crowding levels before boarding, so that I can choose less crowded alternatives or adjust my travel time.
 
-## 7. Data Requirements
+#### Acceptance Criteria
 
-### 7.1 Historical Data
-- Bus ridership patterns (6-12 months of historical data)
-- Route schedules and frequency information
-- Weather data (temperature, rainfall, humidity)
-- Public holidays and local events calendar
+1. WHEN dwell time, headway, and historical patterns are analyzed, THE System SHALL predict crowding level for applicable transport modes
+2. THE System SHALL classify crowding using defined severity categories
+3. WHEN crowding is predicted to reach concerning levels, THE System SHALL generate an alert
+4. THE System SHALL update crowding predictions periodically
+5. WHEN historical data is insufficient for prediction, THE System SHALL use schedule-based estimates
 
-### 7.2 Real-time Data Sources
-- GPS tracking data from buses (simulated for prototype)
-- Weather API feeds
-- Traffic congestion data
-- Special events and disruptions
+### Requirement 5: Delay Prediction
 
-### 7.3 External Data Integration
-- Google Maps API for route information
-- OpenWeatherMap API for weather data
-- Public transport authority APIs (where available)
-- Social media feeds for event detection (optional)
+**User Story:** As a commuter, I want to receive accurate delay predictions, so that I can plan my journey and avoid missed connections.
 
-## 8. Assumptions and Constraints
+#### Acceptance Criteria
 
-### 8.1 Assumptions
-- Historical ridership data can be simulated or obtained from transport authorities
-- Weather significantly impacts ridership patterns
-- Peak hours follow consistent patterns (7-10 AM, 5-8 PM)
-- Users have smartphone access with internet connectivity
+1. WHEN current vehicle position, speed, and historical patterns are analyzed, THE System SHALL predict arrival time at upcoming stops
+2. WHEN predicted arrival time deviates significantly from schedule, THE System SHALL classify it as a delay
+3. THE System SHALL provide delay predictions with confidence indicators
+4. WHEN weather events are active, THE System SHALL adjust delay predictions to account for environmental impact
+5. THE System SHALL update delay predictions periodically for all tracked vehicles
 
-### 8.2 Constraints
-- **Technical**: Limited access to real-time bus occupancy sensors
-- **Data**: Dependency on third-party APIs for weather and traffic data
-- **Budget**: Prototype development with limited cloud infrastructure budget
-- **Timeline**: 6-month development timeline for MVP
-- **Regulatory**: Compliance with local data privacy laws
+### Requirement 6: Weather Impact Analysis
 
-### 8.3 Prototype Limitations
-- Initial deployment limited to 2-3 major bus routes per city
-- Simulated occupancy data for training ML models
-- Basic mobile web interface (no native mobile app)
+**User Story:** As a transport authority, I want to understand how weather affects transport performance, so that I can prepare for disruptions during adverse conditions.
 
-## 9. Success Metrics
+#### Acceptance Criteria
 
-### 9.1 Technical Metrics
-- **Prediction Accuracy**: ≥ 80% for 1-hour forecasts, ≥ 70% for 4-hour forecasts
-- **System Performance**: < 3 second response time, 99.5% uptime
-- **Data Quality**: < 5% missing data points in prediction models
+1. WHEN weather data is received from external APIs, THE System SHALL parse environmental conditions including precipitation, temperature, and alert levels
+2. WHEN extreme weather alerts are active, THE System SHALL adjust prediction models to account for increased uncertainty
+3. WHEN adverse weather conditions are detected, THE System SHALL identify routes that may be affected
+4. THE System SHALL correlate historical weather events with past performance data to improve prediction accuracy
+5. THE System SHALL query weather data sources periodically to maintain current conditions
 
-### 9.2 User Adoption Metrics
-- **User Engagement**: 1,000+ active users within 3 months of launch
-- **Usage Frequency**: Average 3+ predictions per user per week
-- **User Satisfaction**: ≥ 4.0/5.0 rating in user feedback surveys
+### Requirement 7: Route Disruption Detection
 
-### 9.3 Business Impact Metrics
-- **Operational Efficiency**: 10% improvement in bus utilization rates
-- **User Experience**: 15% reduction in reported overcrowding incidents
-- **Cost Savings**: Measurable reduction in operational costs for transport authorities
+**User Story:** As a transport authority, I want to detect route disruptions early, so that I can reroute services and inform commuters promptly.
 
-### 9.4 Prototype Success Criteria
-- Successful deployment on 2 major routes in 1 Indian city
-- Demonstration of core prediction functionality
-- Positive feedback from 100+ beta users
-- Technical architecture validated for future scaling
+#### Acceptance Criteria
 
----
+1. WHEN multiple vehicles on the same route show abnormal patterns, THE System SHALL indicate a potential disruption for applicable transport modes
+2. WHEN a vehicle deviates significantly from its designated route, THE System SHALL indicate off-route behavior where supported by the mode
+3. WHEN no vehicles have serviced a stop for an extended period beyond schedule, THE System SHALL indicate potential service suspension
+4. THE System SHALL classify disruptions by severity level
+5. WHEN a disruption is detected, THE System SHALL generate an alert promptly
 
-**Document Version**: 1.0  
-**Last Updated**: February 2026  
-**Next Review**: March 2026
+### Requirement 8: Historical Pattern Learning
+
+**User Story:** As a data scientist, I want the system to learn from historical data, so that predictions become more accurate over time.
+
+#### Acceptance Criteria
+
+1. THE System SHALL maintain historical records of GPS, headway, and dwell time data for analysis
+2. WHEN analyzing patterns, THE System SHALL distinguish between different day types (weekdays, weekends, holidays)
+3. WHEN analyzing patterns, THE System SHALL identify temporal variations (peak hours, off-peak hours)
+4. THE System SHALL update historical pattern models periodically
+5. WHEN new data indicates pattern changes, THE System SHALL adapt predictions accordingly
+
+### Requirement 9: Multi-Modal Integration
+
+**User Story:** As a commuter, I want to see predictions across all transport modes, so that I can choose the best option for my journey.
+
+#### Acceptance Criteria
+
+1. THE System SHALL process data from buses, trams, trains, and metro services
+2. WHEN displaying predictions, THE System SHALL clearly identify the transport mode
+3. THE System SHALL calculate transfer times between different transport modes
+4. WHEN a disruption affects one mode, THE System SHALL suggest alternatives from other modes
+5. THE System SHALL maintain separate prediction models for each transport mode
+
+### Requirement 10: Commuter-Facing Outputs
+
+**User Story:** As a commuter, I want to receive crowd risk alerts, delay warnings, and alternate route suggestions, so that I can make informed travel decisions.
+
+#### Acceptance Criteria
+
+1. WHEN crowding is predicted to reach concerning levels, THE System SHALL generate crowd risk alerts for affected vehicles
+2. WHEN delays are predicted, THE System SHALL generate delay warnings with estimated impact
+3. WHEN a route is disrupted or heavily delayed, THE System SHALL suggest alternate routes using available transport modes
+4. THE System SHALL deliver commuter alerts promptly after prediction
+5. THE System SHALL include relevant journey information in alternate route suggestions
+
+### Requirement 11: Driver-Facing Outputs
+
+**User Story:** As a vehicle driver, I want to receive congestion alerts and rerouting suggestions, so that I can adjust my route to maintain schedule adherence.
+
+#### Acceptance Criteria
+
+1. WHEN congestion is detected ahead on the route, THE System SHALL generate congestion alerts for affected drivers
+2. WHEN rerouting is possible, THE System SHALL suggest alternative paths with estimated benefits
+3. THE System SHALL deliver driver alerts promptly after detection
+4. THE System SHALL include relevant navigation information in alerts
+5. WHEN weather events affect the route, THE System SHALL include environmental warnings in driver alerts
+
+### Requirement 12: Authority-Facing Dashboards
+
+**User Story:** As a transport authority, I want to view city-wide congestion heatmaps, route stress dashboards, and early disruption alerts, so that I can make data-backed operational decisions.
+
+#### Acceptance Criteria
+
+1. THE System SHALL generate city-wide congestion heatmaps with frequent updates
+2. THE System SHALL provide route stress dashboards showing delay patterns, crowding levels, and headway deviations
+3. WHEN disruptions are detected, THE System SHALL generate early disruption alerts with severity classification
+4. THE System SHALL display historical comparison data on dashboards for context
+5. THE System SHALL allow authorities to filter dashboard views by relevant dimensions
+
+### Requirement 13: Data Quality Validation
+
+**User Story:** As a system administrator, I want to ensure data quality, so that predictions are based on reliable information.
+
+#### Acceptance Criteria
+
+1. WHEN GPS coordinates are outside defined service area boundaries, THE System SHALL reject them
+2. WHEN timestamps are invalid (future or excessively old), THE System SHALL reject them
+3. WHEN speed values exceed reasonable physical limits for the vehicle type, THE System SHALL indicate suspicious data
+4. THE System SHALL calculate and report data quality metrics periodically
+5. WHEN data quality falls below acceptable thresholds, THE System SHALL alert administrators
+
+### Requirement 14: Prediction Accuracy Monitoring
+
+**User Story:** As a data scientist, I want to monitor prediction accuracy, so that I can identify and fix model issues.
+
+#### Acceptance Criteria
+
+1. WHEN actual outcomes are available, THE System SHALL compare them with predictions
+2. THE System SHALL calculate prediction accuracy metrics for delays and crowding
+3. WHEN prediction accuracy falls below acceptable thresholds, THE System SHALL indicate the model needs review
+4. THE System SHALL generate accuracy reports periodically
+5. THE System SHALL track accuracy separately for different contexts (routes, time periods)
+
+### Requirement 15: API for External Access
+
+**User Story:** As a third-party developer, I want to access predictions via API, so that I can build commuter-facing applications.
+
+#### Acceptance Criteria
+
+1. THE System SHALL provide a REST API for querying predictions
+2. WHEN an API request is received, THE System SHALL authenticate the requester
+3. WHEN querying predictions, THE System SHALL return data in a structured format including transport mode, confidence indicators, and timestamps
+4. THE System SHALL implement rate limiting to prevent abuse
+5. THE System SHALL respond to API requests with acceptable latency
+
+### Requirement 16: Privacy and Data Protection
+
+**User Story:** As a privacy officer, I want to ensure no personal data is collected, so that the system complies with privacy regulations.
+
+#### Acceptance Criteria
+
+1. THE System SHALL NOT collect or store passenger identification data
+2. THE System SHALL NOT process camera or facial recognition data
+3. THE System SHALL NOT track individual passenger movements
+4. WHEN storing data, THE System SHALL anonymize vehicle identifiers after 90 days
+5. THE System SHALL provide data retention policies in system documentation
+
+### Requirement 17: System Performance and Scalability
+
+**User Story:** As a system administrator, I want the system to handle large-scale deployments, so that it can serve entire metropolitan areas.
+
+#### Acceptance Criteria
+
+1. THE System SHALL process GPS updates from a large number of vehicles simultaneously
+2. THE System SHALL generate predictions for extensive stop networks within reasonable time
+3. WHEN system load increases significantly, THE System SHALL maintain acceptable response times
+4. THE System SHALL handle substantial API request volumes
+5. WHEN a component fails, THE System SHALL continue operating with degraded functionality
