@@ -4,13 +4,20 @@ Agent15 is a multi-modal AI agent that predicts crowding in buses and metros, de
 ---
 
 Core Idea (Unifying Principle)
----Transport stress can be inferred from how vehicles behave.
+
+---Transport stress can be inferred from how vehicles behave--
 
 Agent15 treats buses, metros, taxis, and autos as moving sensors that reveal:
+
+
 ->Congestion
+
 ->Delay buildup
+
 ->Crowd accumulation
+
 ->Route disruption risks
+
 ---
 
 ## 👩‍💻 Team
